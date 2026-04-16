@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause
+# See LICENSE.txt for the full license.
+
+# type can be tcp or usb
+type=usb
+
+# Following is used if type is set to usb
+vid=0x0955
+pid=0x7410
+#sid=0
+iid=0x0	# Debug is on interface 0
+#serial=
+
+# Following is used if type is set to tcp
+ipaddr=127.0.0.1
+port=8080

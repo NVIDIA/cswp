@@ -1,0 +1,6 @@
+SPDX-FileCopyrightText: Copyright (c) 2026 NVidia Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause
+See LICENSE.txt for the full license.
+
+All the test in this directory are meant to be sanity tests for the Vera
+implementation of the CSWP client.

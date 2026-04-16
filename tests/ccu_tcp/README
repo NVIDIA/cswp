@@ -1,0 +1,6 @@
+SPDX-FileCopyrightText: Copyright (c) 2026 NVidia Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause
+See LICENSE.txt for the full license.
+
+Test ccu_over_socket_test.sh lists some of the commands that should pass to ensure sanity ccu TCP flow.
+Make sure to update cdebug_trnsprt_cfg.txt to change type to "tcp" before running the test.

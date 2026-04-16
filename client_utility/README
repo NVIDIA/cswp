@@ -1,0 +1,18 @@
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause
+See LICENSE.txt for the full license.
+
+This utility is expected to be used for NVIDIA CSWP implementation testing. It
+is not a part of CSWP protocol. Instead, it is a wrapper around the CSWP client
+that provides simplified upstream API for standalone debug and tools.
+
+This directory also, contains a dummy CSWP server to test ccu locally over TCP socket.
+!!!! It does not support all the use cases and can be modified to check ceratin corner cases. !!!!
+
+It is meant to test TCP transport and CSWP encoding decoding flow locally. Entirety of the protocol can only be tested on HW.
+
+Here are the limitations:
+- Writes to registers oe memories are not stores therefore, read to verify a write will not work.
+- Read values from registers and memory are fudged random and do not reflect what is expected from HW.
+- CSTRACE and Reading async message from server is not supported.
+
