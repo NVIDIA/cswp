@@ -1,6 +1,6 @@
 SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 SPDX-License-Identifier: BSD-3-Clause
-See LICENSE.txt for the full license.
+See LICENSE.md for the full license.
 
 This utility is expected to be used for NVIDIA CSWP implementation testing. It
 is not a part of CSWP protocol. Instead, it is a wrapper around the CSWP client

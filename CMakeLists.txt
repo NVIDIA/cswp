@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVidia Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
-# See LICENSE.txt for the full license.
+# See LICENSE.md for the full license.
 
 cmake_minimum_required (VERSION 3.22.1)
 project(cswp)

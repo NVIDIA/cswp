@@ -1,12 +1,12 @@
-SPDX-FileCopyrightText: Copyright (c) 2018 Arm Ltd.  All rights reserved.
-SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVidia Corporation. All rights reserved.
-SPDX-License-Identifier: BSD-3-Clause
+<!-- SPDX-FileCopyrightText: Copyright (c) 2018 Arm Ltd.  All rights reserved. -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVidia Corporation. All rights reserved. -->
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
 
---------------------------------------------------------------------------------
+# APPLICABLE LICENSES
 Files in this package are released under the following licenses depending on
 their SPDX-License-Identifier field:
 
-LicenseRef-NvidiaProprietary:
+## LicenseRef-NvidiaProprietary:
 NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
 property and proprietary rights in and to this material, related
 documentation and any modifications thereto. Any use, reproduction,
@@ -14,7 +14,7 @@ disclosure or distribution of this material and related documentation
 without an express license agreement from NVIDIA CORPORATION or
 its affiliates is strictly prohibited.
 
-BSD-3-Clause:
+## BSD-3-Clause:
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this
@@ -36,7 +36,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
---------------------------------------------------------------------------------
+# STATEMENT ON DERIVATIVE WORK
 Based on work by Development Solutions Group
               Arm Ltd
               https://www.arm.com

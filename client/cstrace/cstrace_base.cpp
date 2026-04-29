@@ -1,7 +1,7 @@
 /*
  * SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
- * See LICENSE.txt for the full license.
+ * See LICENSE.md for the full license.
  */
 
 #include "cstrace_base.h"

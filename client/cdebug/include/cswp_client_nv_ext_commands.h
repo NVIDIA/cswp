@@ -7,7 +7,7 @@
 /*
  * SPDX-FileCopyrightText: Copyright (c) 2024-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
- * See LICENSE.txt for the full license.
+ * See LICENSE.md for the full license.
  */
 
 #ifndef CSWP_CLIENT_NV_EXT_COMMANDS_H
