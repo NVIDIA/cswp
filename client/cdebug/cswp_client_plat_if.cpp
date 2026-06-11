@@ -163,7 +163,6 @@ CSWPBase::send(const void* data, size_t size) {
 //--------------------------------------------------------------------
 int
 CSWPBase::listen(void) {
-
     try {
         while (readThread_running) {
             usbdata readData;
@@ -229,15 +228,29 @@ CSWPBase::receive(void* data, size_t size, size_t* used) {
 
     if (m_transport == "usb") {
         PlatMutex::ScopedLock lock(respQ_lock);
+
+        // Timeout after 5s to prevent locking up the program
+        struct timespec start_time, deadline;
+        clock_gettime(CLOCK_MONOTONIC, &start_time);
+        deadline.tv_sec  = start_time.tv_sec + (CSWP_TIMEOUT_MS / 1000);
+        deadline.tv_nsec = start_time.tv_nsec + ((CSWP_TIMEOUT_MS % 1000) * 1000000);
+        // Normalize if nanoseconds exceed 1 second
+        if (deadline.tv_nsec >= 1000000000) {
+            deadline.tv_sec++;
+            deadline.tv_nsec -= 1000000000;
+        }
+
         while (respQ.empty() && readThread_running) {
-            respQCond.wait(lock);
+            if (!respQCond.timed_wait(lock, deadline)) {
+                return CSWP_TIMEOUT;
+            }
         }
         // If receive thread exited, we must bail out
         if (!readThread_running) {
             throw USBException("receive thread exited.");
             return CSWP_COMMS;
         }
-    
+
         usbdata resp = respQ.front();
         respQ.pop();
 

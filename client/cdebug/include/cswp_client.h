@@ -26,6 +26,14 @@ extern "C" {
 #endif
 
 //------------------------------------------------------------------------------------
+// CSWP client global defines
+//------------------------------------------------------------------------------------
+
+// This is the timeout after which the client will return an error and stop
+// waiting for a response once it sent a command.
+#define CSWP_TIMEOUT_MS 2000
+
+//------------------------------------------------------------------------------------
 // CSWP client data structures
 //------------------------------------------------------------------------------------
 #define CSWP_REQ_RSP_BUFFER_SIZE 16384
@@ -35,7 +43,7 @@ struct _cswp_client_t;
 typedef struct _cswp_client_t {
     char* errorMsg; // Error message buffer
     void* priv;     // Private data for client implementation
-    
+
     // Client transport functions
     void* transport_owner; 
     int   (*connect)(struct _cswp_client_t* client);

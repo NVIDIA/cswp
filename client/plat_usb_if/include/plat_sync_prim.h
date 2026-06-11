@@ -68,9 +68,15 @@ public:
     template<typename Lock>
     void wait(Lock& lock) { m_condition.wait(lock.get_lock()); }
     template<typename Lock>
+    // WARNING: abs_timeout must be based of CLOCK_MONOTONIC to be compatible
+    // with this API.
     bool timed_wait(Lock& lock, const struct timespec abs_timeout) {
-        auto duration = std::chrono::system_clock::from_time_t(abs_timeout.tv_sec) + 
-                        std::chrono::nanoseconds(abs_timeout.tv_nsec);
+        auto abs_duration = std::chrono::seconds(abs_timeout.tv_sec)
+                                + std::chrono::nanoseconds(abs_timeout.tv_nsec);
+        auto duration = std::chrono::steady_clock::time_point(
+                                    std::chrono::duration_cast<std::chrono
+                                        ::steady_clock::duration>(abs_duration)
+                                    );
         return m_condition.wait_until(lock.get_lock(), duration) != std::cv_status::timeout;
     }
     // Notify methods

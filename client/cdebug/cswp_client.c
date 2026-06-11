@@ -482,8 +482,10 @@ cswp_init(cswp_client_t* client,
         priv->connected++;
         return CSWP_SUCCESS;
     }
-    
-    if (client->connect) { res = client->connect(client);}
+
+    if (client->connect) {
+        res = client->connect(client);
+    }
 
     if (res == CSWP_SUCCESS) {
         cswp_client_prep_priv_cmd_data(client);
@@ -500,13 +502,18 @@ cswp_init(cswp_client_t* client,
         rsp_node->serverVersion = serverVersion;
         cswp_client_add_node_for_pending_rsp(client, CSWP_INIT, cswp_init_complete, rsp_node);
         res = cswp_client_send_to_transact(client);
-        // Save command response data in case cswp_init is called again
-        priv->cswp_init_serverProtocolVersion = *serverProtocolVersion;
-        priv->cswp_init_serverID = (char *) malloc(strlen(serverID)+1);
-        strcpy(priv->cswp_init_serverID, serverID);
-        priv->cswp_init_serverVersion = *serverVersion;
-        priv->connected = 1;
-    } else if (client->disconnect) {
+        if (res == CSWP_SUCCESS) {
+            // Save command response data in case cswp_init is called again
+            priv->cswp_init_serverProtocolVersion = *serverProtocolVersion;
+            priv->cswp_init_serverID = (char *) malloc(strlen(serverID)+1);
+            strcpy(priv->cswp_init_serverID, serverID);
+            priv->cswp_init_serverVersion = *serverVersion;
+            priv->connected = 1;
+        }
+    }
+
+    // Cleanup if we found an error
+    if ((res != CSWP_SUCCESS) && client->disconnect) {
         client->disconnect(client);
     }
 
@@ -522,18 +529,32 @@ cswp_term(cswp_client_t* client)
     cswp_client_priv_t* priv = (cswp_client_priv_t*)client->priv;
 
     cswp_client_prep_priv_cmd_data(client);
-    int res = cswp_encode_term_command(priv->cmd);
+    int res;
 
-    if (--priv->connected > 0) {
+    if (priv->connected == 0) {
+        // We never connected before, we connect here. This path is used
+        // when init failed and we suspect it is because there is an
+        // active CSWP connection.
+        if (client->connect) {
+            res = client->connect(client);
+            if (res != CSWP_SUCCESS) {
+                return res;
+            }
+        }
+    } else if (--priv->connected > 0) {
         return CSWP_SUCCESS;
     }
     
+    res = cswp_encode_term_command(priv->cmd);
+
     if (res == CSWP_SUCCESS) {
         cswp_client_add_node_for_pending_rsp(client, CSWP_TERM, NULL, 0);
         res = cswp_client_send_to_transact(client);
     }
 
-    if (client->disconnect) { client->disconnect(client); }
+    if (client->disconnect) {
+        client->disconnect(client);
+    }
 
     if (priv->cswp_init_serverID != NULL) {
         free(priv->cswp_init_serverID);
