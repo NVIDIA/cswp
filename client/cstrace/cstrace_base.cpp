@@ -296,7 +296,7 @@ StreamingTraceBase::WaitForEvent(int sink, int msTimeout) {
 
     // Set deadline from msTimeout provided
     struct timespec start_time, deadline;
-    clock_gettime(CLOCK_REALTIME, &start_time);
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
     deadline.tv_sec  = start_time.tv_sec + (msTimeout / 1000);
     deadline.tv_nsec = start_time.tv_nsec + ((msTimeout % 1000) * 1000000);
     // Normalize if nanoseconds exceed 1 second

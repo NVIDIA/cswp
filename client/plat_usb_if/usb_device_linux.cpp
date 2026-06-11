@@ -344,17 +344,25 @@ USBDeviceLinux::findAndOpenDeviceBySerialNumber() {
                                 if (err == 0) {
                                     std::string serial;
                                     std::string manufacturer;
-                                    if (m_serialNumber.empty()) { foundDevice = devHandle; /* use first device found */ }
+                                    if (m_serialNumber.empty()) {
+                                        foundDevice = devHandle; /* use first device found */
+                                    }
                                     else if (getUsbString(devHandle, desc.iSerialNumber, 0, serial) > 0) {
-                                        if (serial == m_serialNumber) { foundDevice = devHandle; }
+                                        if (serial == m_serialNumber) {
+                                            foundDevice = devHandle;
+                                        }
                                     } else if (getUsbString(devHandle, desc.iManufacturer, 0, manufacturer) > 0) {
                                         // USB device may not have serialNumber setup correctly. Check Manufacturer as an alternative.
-                                        if (manufacturer == m_serialNumber) { foundDevice = devHandle; }
+                                        if (manufacturer == m_serialNumber) {
+                                            foundDevice = devHandle;
+                                        }
                                     } else {
                                         foundDevice = 0;
                                     }
                                     // close the device if it wasn't the wanted one, otherwise leave it open for return
-                                    if (foundDevice == 0) { libusb_close(devHandle); }
+                                    if (foundDevice == 0) {
+                                        libusb_close(devHandle);
+                                    }
                                 }
                                 break; // only look at each interface once
                             }
