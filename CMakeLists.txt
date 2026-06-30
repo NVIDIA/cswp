@@ -4,6 +4,7 @@
 
 cmake_minimum_required (VERSION 3.22.1)
 project(cswp)
+option(CSWP_RELEASE_TARBALL "If TRUE a tarball of all files installed will be created" TRUE)
 
 find_package(PkgConfig REQUIRED)
 find_package(Doxygen)
@@ -91,20 +92,22 @@ add_subdirectory(tests)
 
 # KEEP THIS LAST:
 # Create a package of the project.
-install(
-  CODE "
-    message(STATUS \"Creating CSWP package: ${CMAKE_INSTALL_PREFIX}/packages/cswp-${CMAKE_SYSTEM_PROCESSOR}-pkg.tar.bz2\")
-    execute_process(
-      COMMAND mkdir -p ${CMAKE_INSTALL_PREFIX}/packages
-      ERROR_QUIET
-    )
-    execute_process(
-      COMMAND tar --exclude-backups -jcf packages/cswp-${CMAKE_SYSTEM_PROCESSOR}-pkg.tar.bz2 ${INSTALLED_FILES}
-      WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
-      RESULT_VARIABLE RETVAR
-    )
-    if (RETVAR)
-      message(FATAL_ERROR \"CSWP package creation failed\")
-    endif()
-  "
-)
+if (CSWP_RELEASE_TARBALL)
+  install(
+    CODE "
+      message(STATUS \"Creating CSWP package: \$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/packages/cswp-${CMAKE_SYSTEM_PROCESSOR}-pkg.tar.bz2\")
+      execute_process(
+        COMMAND mkdir -p \$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/packages
+        ERROR_QUIET
+      )
+      execute_process(
+        COMMAND tar --exclude-backups -jcf packages/cswp-${CMAKE_SYSTEM_PROCESSOR}-pkg.tar.bz2 ${INSTALLED_FILES}
+        WORKING_DIRECTORY \$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}
+        RESULT_VARIABLE RETVAR
+      )
+      if (RETVAR)
+        message(FATAL_ERROR \"CSWP package creation failed\")
+      endif()
+    "
+  )
+endif()
