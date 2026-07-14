@@ -117,12 +117,14 @@ struct cswp_reg_list_rsp_data {
 // cswp_mem_poll_rsp_data
 struct cswp_mem_poll_rsp_data {
     uint8_t* buf;      // Buffer for read data
+    size_t maxBytes;   // Maximum allocated space in buf
     size_t* bytesRead; // Size of the provided buffer?
 };
 
 // cswp_mem_read_rsp_data
 struct cswp_mem_read_rsp_data {
     uint8_t* buf;      // Buffer for read data
+    size_t maxBytes;   // Maximum allocated space in buf
     size_t* bytesRead; // Number of byte in the provided buffer
 };
 
@@ -188,6 +190,7 @@ cswp_client_init(cswp_client_t* client)
     cswp_client_priv_t* priv;
 
     client->errorMsg = calloc(1, CSWP_ERR_MSG_SIZE);
+    client->errorCode = CSWP_SUCCESS;
 
     /// Allocate and initialise private data
     priv = calloc(sizeof(cswp_client_priv_t), 1);
@@ -265,8 +268,9 @@ cswp_client_verify_response(cswp_client_t* client,
     }
 
     if (res == CSWP_SUCCESS && errCode != CSWP_SUCCESS) {
-        res = (int)errCode;
+        client->errorCode = (int)errCode;
         cswp_decode_error_response_body(priv->rsp, client->errorMsg, CSWP_ERR_MSG_SIZE);
+        res = client->errorCode;
     }
 
     if (res == CSWP_SUCCESS) {
@@ -430,6 +434,7 @@ cswp_client_error(cswp_client_t* client, int errorCode, const char* fmt, ...)
     va_start(args, fmt);
     vsnprintf(client->errorMsg, CSWP_ERR_MSG_SIZE, fmt, args);
     va_end(args);
+    client->errorCode = errorCode;
     return errorCode;
 }
 
@@ -1062,7 +1067,17 @@ cswp_device_mem_read_complete(cswp_client_t* client, void* replyData)
     int res = cswp_decode_mem_read_response_body(priv->rsp, &bytesRead);
     if (res == CSWP_SUCCESS) {
         void* pData;
-        cswp_buffer_get_direct(priv->rsp, &pData, bytesRead);
+
+        res = cswp_buffer_get_direct(priv->rsp, &pData, bytesRead);
+        if (res != CSWP_SUCCESS)
+            return res;
+        // Check if server sent back more data than expected which could lead
+        // to a buffer overflow. In that case clamp memcpy and flag with an
+        // error.
+        if (bytesRead > memReadReplyData->maxBytes) {
+            bytesRead = memReadReplyData->maxBytes;
+            res = CSWP_OUTPUT_BUFFER_OVERFLOW;
+        }
         memcpy(memReadReplyData->buf, pData, bytesRead);
         *memReadReplyData->bytesRead = bytesRead;
     }
@@ -1090,6 +1105,7 @@ cswp_device_mem_read(cswp_client_t* client,
         struct cswp_mem_read_rsp_data* replyData = calloc(1, sizeof(struct cswp_mem_read_rsp_data));
         replyData->buf = buf;
         replyData->bytesRead = bytesRead;
+        replyData->maxBytes = size;
         cswp_client_add_node_for_pending_rsp(client, CSWP_MEM_READ, cswp_device_mem_read_complete, replyData);
         res = cswp_client_send_to_transact(client);
     }
@@ -1132,9 +1148,22 @@ cswp_device_mem_poll_complete(cswp_client_t* client, void* replyData)
     int res = cswp_decode_mem_poll_response_body(priv->rsp, &bytesRead);
     if (res == CSWP_SUCCESS) {
         void* pData;
-        cswp_buffer_get_direct(priv->rsp, &pData, bytesRead);
-        if (memPollReplyData->buf)       { memcpy(memPollReplyData->buf, pData, bytesRead); }
-        if (memPollReplyData->bytesRead) { *memPollReplyData->bytesRead = bytesRead; }
+
+        res = cswp_buffer_get_direct(priv->rsp, &pData, bytesRead);
+        if (res != CSWP_SUCCESS)
+            return res;
+        if (memPollReplyData->buf) {
+            // Check if server sent back more data than expected which could lead
+            // to a buffer overflow.
+            if (bytesRead > memPollReplyData->maxBytes) {
+                bytesRead = memPollReplyData->maxBytes;
+                res = CSWP_OUTPUT_BUFFER_OVERFLOW;
+            }
+            memcpy(memPollReplyData->buf, pData, bytesRead);
+        }
+        if (memPollReplyData->bytesRead) {
+            *memPollReplyData->bytesRead = bytesRead;
+        }
     }
     return res;
 }
@@ -1166,6 +1195,7 @@ cswp_device_mem_poll(cswp_client_t* client,
         struct cswp_mem_poll_rsp_data* replyData = calloc(1, sizeof(struct cswp_mem_poll_rsp_data));
         replyData->buf = buf;
         replyData->bytesRead = bytesRead;
+        replyData->maxBytes = size;
         cswp_client_add_node_for_pending_rsp(client, CSWP_MEM_POLL, cswp_device_mem_poll_complete, replyData);
         res = cswp_client_send_to_transact(client);
     }
@@ -1401,8 +1431,9 @@ cswp_async_message(cswp_client_t* client,
             
     cswp_buffer_get_varint(priv->rsp, &errCode);
     if ((errCode != ASYNC_RAS_EVENT) && (errCode != ASYNC_DBG_PUTS)) {
+        client->errorCode = (int)errCode;
         cswp_decode_error_response_body(priv->rsp, client->errorMsg, CSWP_ERR_MSG_SIZE);
-        return (int)errCode;
+        return client->errorCode;
     }
 
     res = cswp_decode_async_message_body(priv->rsp,
@@ -1420,7 +1451,13 @@ cswp_async_message(cswp_client_t* client,
 const char *
 cswp_decode_error(cswp_client_t* client, int e)
 {
-    cswp_result_t cswp_e = (cswp_result_t)e;
+    cswp_result_t cswp_e;
+
+    // If the error being decoded match the last error message return that
+    // rather than a generic error.
+    if (e == client->errorCode)
+        return client->errorMsg;
+    cswp_e = (cswp_result_t)e;
     switch(cswp_e) {
         case CSWP_SUCCESS: return "Successful operation";
         case CSWP_FAILED: return "Other error";
@@ -1451,6 +1488,7 @@ cswp_decode_error(cswp_client_t* client, int e)
         case CSWP_MEM_INVALID_ADDRESS: return "Invalid address for memory access";
         case CSWP_MEM_BAD_ACCESS_SIZE: return "Invalid access size for memory access";
         case CSWP_MEM_POLL_NO_MATCH: return "Poll did not match";
+        case CSWP_TXFAILED: return "Command was not received by server";
     }
     return "Invalid error code";
 }

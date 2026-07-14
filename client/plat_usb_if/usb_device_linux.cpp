@@ -379,7 +379,7 @@ USBDeviceLinux::findAndOpenDeviceBySerialNumber() {
         throw USBException("No libusb context");
     }
     if (!foundDevice) {
-        throw USBException("Device not found");
+        throw USBException("CSWP device not found");
     }
     return foundDevice;
 }

@@ -290,13 +290,18 @@ cleanup_cdebug(unique_ptr<CSWPBase>& cdbgp, bool async_flush_and_discon_transpor
     return 0;
 }
 
-#define TERM_EARLY_ON_ERR(cdbgp, condition, msg, errcode)                       \
-    do {                                                                        \
-        if (condition) {                                                        \
-            cout << "[ccu_cswp] " << msg << endl;                               \
-            cleanup_cdebug(cdbgp, true /* async_flush_and_discon_transport */); \
-            return errcode;                                                     \
-        }                                                                       \
+#define TERM_EARLY_ON_ERR(cdbgp, condition, msg, errcode)                               \
+    do {                                                                                \
+        if (condition) {                                                                \
+            cout << "[ccu_cswp] " << msg << endl;                                       \
+            /* check if the error code is from the CSWP client, and if it ... */        \
+            /* ...is display the error details. */                                      \
+            const char *cswp_msg = cdbgp->cswp_decode_error(errcode);                   \
+            if (strcmp (cswp_msg, "Invalid error code") != 0)                           \
+                cout << "[ccu_cswp] Error is \"" << cswp_msg << "\"."<< endl;           \
+            cleanup_cdebug(cdbgp, true /* async_flush_and_discon_transport */);         \
+            return errcode;                                                             \
+        }                                                                               \
     } while (0)
 
 static int
@@ -306,13 +311,18 @@ cleanup_cdebug_wo_async_flush(unique_ptr<CSWPBase>& cdbgp) {
     return 0;
 }
 
-#define TERM_EARLY_ON_ERR_WO_ASYNC_FLUSH(cdbgp, condition, msg, errcode)     \
-    do {                                                                     \
-        if (condition) {                                                     \
-            cout << "[ccu_cswp] " << msg << endl;                            \
-            cleanup_cdebug_wo_async_flush(cdbgp);                            \
-            return errcode;                                                  \
-        }                                                                    \
+#define TERM_EARLY_ON_ERR_WO_ASYNC_FLUSH(cdbgp, condition, msg, errcode)                \
+    do {                                                                                \
+        if (condition) {                                                                \
+            cout << "[ccu_cswp] " << msg << endl;                                       \
+            /* check if the error code is from the CSWP client, and if it ... */        \
+            /* ...is display the error details. */                                      \
+            const char *cswp_msg = cdbgp->cswp_decode_error(errcode);                   \
+            if (strcmp (cswp_msg, "Invalid error code") != 0)                           \
+                cout << "[ccu_cswp] Error is \"" << cswp_msg << "\"."<< endl;           \
+            cleanup_cdebug_wo_async_flush(cdbgp);                                       \
+            return errcode;                                                             \
+        }                                                                               \
     } while (0)
 
 /*
@@ -438,7 +448,7 @@ cleanup_cstrace(cstrace_cmd_t* c) {
 int
 init_cswp(int argc _UNUSED_PARAM_, char* argv[] _UNUSED_PARAM_) {
 
-    RETURN_EARLY_ON_ERR((argc != 2), "Exepcted 2 arguments.", CCU_BAD_CMD_ARG);
+    RETURN_EARLY_ON_ERR((argc != 2), "Expected 2 arguments.", CCU_BAD_CMD_ARG);
 
     unique_ptr<CSWPBase> cdbgp;
     int ex_stat = 0, res = 0;
@@ -463,6 +473,13 @@ init_cswp(int argc _UNUSED_PARAM_, char* argv[] _UNUSED_PARAM_) {
         
     }
     TERM_EARLY_ON_ERR(cdbgp, (ex_stat != 0), "Exception caught CSWP_INIT.", ex_stat);
+    // Detect these special cases which indicates CSWP is locked/disabled
+    // when seen in an init command.
+    if (res == CSWP_TIMEOUT) {
+        TERM_EARLY_ON_ERR(cdbgp, 1, "CSWP_INIT command failed: interface locked.", res);
+    } else if (res == CSWP_TXFAILED) {
+        TERM_EARLY_ON_ERR(cdbgp, 1, "CSWP_INIT command failed: interface disabled.", res);
+    }
     TERM_EARLY_ON_ERR(cdbgp, (res != 0),     "CSWP_INIT command failed.", res);
     process_init_cswp_out(serverProtocolVersion, serverID, serverVersion);
 

@@ -42,6 +42,7 @@ extern "C" {
 struct _cswp_client_t;
 typedef struct _cswp_client_t {
     char* errorMsg; // Error message buffer
+    int errorCode; // Code corresponding to the error in errorMsg
     void* priv;     // Private data for client implementation
 
     // Client transport functions

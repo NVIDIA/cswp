@@ -53,7 +53,8 @@ typedef enum
     CSWP_MEM_FAILED             = 0x0300, /**< Memory access failed */
     CSWP_MEM_INVALID_ADDRESS    = 0x0301, /**< Invalid address for memory access */
     CSWP_MEM_BAD_ACCESS_SIZE    = 0x0302, /**< Invalid access size for memory access */
-    CSWP_MEM_POLL_NO_MATCH      = 0x0303  /**< Poll did not match */
+    CSWP_MEM_POLL_NO_MATCH      = 0x0303, /**< Poll did not match */
+    CSWP_TXFAILED               = 0xF000  /**< Client: Command was not received by server */
 } cswp_result_t;
 
 /**
