@@ -103,6 +103,7 @@ std::unordered_map <int, std::string> errMap = {
         {CSWP_MEM_INVALID_ADDRESS, "cswp_error:CSWP_MEM_INVALID_ADDRESS"},
         {CSWP_MEM_BAD_ACCESS_SIZE, "cswp_error:CSWP_MEM_BAD_ACCESS_SIZE"},
         {CSWP_MEM_POLL_NO_MATCH, "cswp_error:CSWP_MEM_POLL_NO_MATCH"},
+        {CSWP_TXFAILED, "cswp_error:CSWP_TXFAILED"},
         {CDEBUG_INVALID_TARGET, "cswp_error:CDEBUG_INVALID_TARGET"},
         {CDEBUG_INVALID_CONFIG, "cswp_error:CDEBUG_INVALID_CONFIG"},
         {CSTRACE_NO_CONNECTION, "cswp_error:CSTRACE_NO_CONNECTION"},

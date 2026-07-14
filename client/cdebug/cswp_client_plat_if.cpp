@@ -59,10 +59,8 @@ CSWPBase::connect() {
 
         if (m_epCmd == -1) {
             throw USBException("Failed to find command endpoint");
-            return CSWP_COMMS;
         } else if (m_epRsp == -1) {
             throw USBException("Failed to find response endpoint");
-            return CSWP_COMMS;
         } else {
             // Connection is successful, create a readThread.
             PlatMutex::ScopedLock lock(readThread_lock);
@@ -82,13 +80,11 @@ CSWPBase::connect() {
                              m_server_info->ai_protocol);
         if (m_socket_fd < 0) {
             throw CDebugEx(CSWP_COMMS, "Error creating socket");
-            return CSWP_COMMS;
         }
 
         // Connect to server
         if (::connect(m_socket_fd, m_server_info->ai_addr, m_server_info->ai_addrlen) < 0) {
             throw CDebugEx(CSWP_COMMS, "Error connecting to server");
-            return CSWP_COMMS;
         }
     }
     return CSWP_SUCCESS;
@@ -137,8 +133,7 @@ CSWPBase::send(const void* data, size_t size) {
             int token = m_usb->completeTransfer_forToken(cmdToken, &status, &used);
             if (token == cmdToken) {
                 if (status != USBDevice::Transfer_SUCCESS || used < size) {
-                    throw USBException("Failed to send command");
-                    return CSWP_COMMS;
+                    throw CDebugEx(CSWP_TXFAILED, "Failed to send command");
                 }
                 break;
             }
@@ -148,8 +143,7 @@ CSWPBase::send(const void* data, size_t size) {
             return CSWP_NOT_INITIALIZED;
         size_t bytes_sent = ::send(m_socket_fd, data, size, 0);
         if (bytes_sent != size) {
-            throw CDebugEx(CSWP_COMMS, "Sent bytes are not same as requested.");
-            return CSWP_COMMS;
+            throw CDebugEx(CSWP_COMMS, "Sent bytes are not same as requested");
         }
     }
     return CSWP_SUCCESS;
@@ -248,7 +242,6 @@ CSWPBase::receive(void* data, size_t size, size_t* used) {
         // If receive thread exited, we must bail out
         if (!readThread_running) {
             throw USBException("receive thread exited.");
-            return CSWP_COMMS;
         }
 
         usbdata resp = respQ.front();
@@ -262,7 +255,6 @@ CSWPBase::receive(void* data, size_t size, size_t* used) {
         size_t bytes_received = ::recv(m_socket_fd, data, size, 0);
         if (bytes_received > size) {
             throw CDebugEx(CSWP_COMMS, "Received bytes are not same as requested.");
-            return CSWP_COMMS;
         }
         *used = bytes_received;
     }
@@ -306,6 +298,8 @@ cswp_transport_connect(cswp_client_t* client) {
     try {
         CSWPBase* clientbase = reinterpret_cast<CSWPBase*>(client->transport_owner);
         return clientbase->connect();
+    } catch (const CDebugEx& dbge) {
+        return cswp_client_error(client, dbge.code(), dbge.what());
     } catch (const std::exception& e) {
         return cswp_client_error(client, CSWP_COMMS, e.what());
     }
@@ -321,6 +315,8 @@ cswp_transport_disconnect(cswp_client_t* client) {
         // Do not clear transport_owner which is set in constructor, not connect
         try {
             clientbase->disconnect();
+        } catch (const CDebugEx& dbge) {
+            return cswp_client_error(client, dbge.code(), dbge.what());
         } catch (const std::exception& e) {
             return cswp_client_error(client, CSWP_COMMS, e.what());
         }
@@ -338,6 +334,8 @@ cswp_transport_send(cswp_client_t* client,
     CSWPBase* clientbase = reinterpret_cast<CSWPBase*>(client->transport_owner);
     try {
         return clientbase->send(data, size);
+    } catch (const CDebugEx& dbge) {
+        return cswp_client_error(client, dbge.code(), dbge.what());
     } catch (const std::exception& e) {
         return cswp_client_error(client, CSWP_COMMS, e.what());
     }
@@ -353,6 +351,8 @@ cswp_transport_receive(cswp_client_t* client,
     CSWPBase* clientbase = reinterpret_cast<CSWPBase*>(client->transport_owner);
     try {
         return clientbase->receive(data, size, used);
+    } catch (const CDebugEx& dbge) {
+        return cswp_client_error(client, dbge.code(), dbge.what());
     } catch (const std::exception& e) {
         return cswp_client_error(client, CSWP_COMMS, e.what());
     }
@@ -368,6 +368,8 @@ cswp_transport_receive_async(cswp_client_t* client,
     CSWPBase* clientbase = reinterpret_cast<CSWPBase*>(client->transport_owner);
     try {
         return clientbase->receive_async(data, size, used);
+    } catch (const CDebugEx& dbge) {
+        return cswp_client_error(client, dbge.code(), dbge.what());
     } catch (const std::exception& e) {
         return cswp_client_error(client, CSWP_COMMS, e.what());
     }
